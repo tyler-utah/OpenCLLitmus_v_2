@@ -50,9 +50,12 @@ public:
     
     // Special case for AMD
     err = CLWGetDeviceInfo(device, info, 256, name, NULL);
-    if (err < 0)
-      return false;
-    
+    if (err < 0){
+      std::stringstream error_str;
+      error_str << "[Error:getDeviceName] " << err;
+      return error_str.str();
+    }
+
     std::string ret(name);
 #ifdef CL_DEVICE_BOARD_NAME_AMD
     if (strstr(ret.c_str(), "Advanced Micro Devices"))

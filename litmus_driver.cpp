@@ -313,7 +313,7 @@ int run_test(std::string test, std::string test_config, int iterations, int plat
   }
 
   cl_context_properties props[3] = { CL_CONTEXT_PLATFORM, (cl_context_properties)exec.exec_platform, 0 };
-  exec.exec_context = clCreateContext(props, 1, &(exec.exec_device), NULL, NULL, &err);
+  exec.exec_context = CLWCreateContext(props, 1, &(exec.exec_device), NULL, NULL, &err);
   check_ocl(err);
   //cl::CommandQueue queue(cl::Context(exec.exec_context), cl::Device(exec.exec_device));
   exec.exec_queue = CLWCreateCommandQueue(exec.exec_context, exec.exec_device, NULL, &err);

@@ -2,7 +2,7 @@
 
 #ifdef ANDROID
 #define CLW_CLASS_WRAPPER DroidCL droidCL;
-#define CLWGetPlatformIDs droidCL.clGetplatformIDs
+#define CLWGetPlatformIDs droidCL.clGetPlatformIDs
 #define CLWGetDeviceIDs droidCL.clGetDeviceIDs
 #define CLWGetDeviceInfo droidCL.clGetDeviceInfo
 #define CLWCreateProgramWithSource droidCL.clCreateProgramWithSource
@@ -16,7 +16,7 @@
 #define CLWFinish droidCL.clFinish
 #define CLWEnqueueNDRangeKernel droidCL.clEnqueueNDRangeKernel
 #define CLWEnqueueReadBuffer droidCL.clEnqueueReadBuffer
-
+#define CLWCreateContext droidCL.clCreateContext
 
 #else
 #define CLW_CLASS_WRAPPER  ;
