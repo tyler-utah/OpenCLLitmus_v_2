@@ -24,7 +24,6 @@ int LIST = 0;
 int PLATFORM_ID = 0;
 int DEVICE_ID = 0;
 int QUIET = 0;
-int ITERATIONS = 1000;
 int USE_CHIP_CONFIG = 1;
 
 struct TestConfig
@@ -165,7 +164,7 @@ std::string parse_args(int argc, char *argv[])
       break;
     case 'i':
       errno = 0;
-      ITERATIONS = strtol(optarg, &end, 10);
+      iterations = strtol(optarg, &end, 10);
       if (errno != 0 || *end != '\0')
       {
         fprintf(stderr, "Invalid iterations '%s'. An integer must be specified.\n", optarg);
@@ -272,7 +271,6 @@ int run_test(std::string test, std::string test_config, int iterations, int plat
   std::vector<std::vector<cl_device_id>> devices;
   getDeviceList(devices, err);
   check_ocl(err);
-
 
   if (platform_id >= devices.size())
   {
@@ -395,7 +393,7 @@ int run_test(std::string test, std::string test_config, int iterations, int plat
     histogram[i] = 0;
   }
 
-  for (int i = 0; i < ITERATIONS; i++)
+  for (int i = 0; i < iterations; i++)
   {
 
     check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 5, sizeof(cl_int), &scratch_location));
@@ -509,9 +507,9 @@ int run_test(std::string test, std::string test_config, int iterations, int plat
   return_str << std::endl;
   return_str << "RATES" << std::endl;
   return_str << "-------------------" << std::endl;
-  return_str << "tests          : " << ITERATIONS << std::endl;
+  return_str << "tests          : " << iterations << std::endl;
   return_str << "time (seconds) : " << time_float << std::endl;
-  return_str << "tests/sec      : " << static_cast<float>(ITERATIONS) / time_float << std::endl;
+  return_str << "tests/sec      : " << static_cast<float>(iterations) / time_float << std::endl;
   return_str << std::endl;
 
 
@@ -579,7 +577,7 @@ int main(int argc, char *argv[])
 
   //std::cout << final_source << std::endl;
 
-  run_test(final_source, tconfig, ITERATIONS, PLATFORM_ID, DEVICE_ID, opts, to_print);
+  run_test(final_source, tconfig, iterations, PLATFORM_ID, DEVICE_ID, opts, to_print);
   std::cout << to_print;
   return 1;
 }
