@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <limits.h>
 #include "functiondefs.h"
-
+#include <string.h>
 
 //From IWOCL tutorial (needs attribution)
 #ifndef CL_DEVICE_BOARD_NAME_AMD

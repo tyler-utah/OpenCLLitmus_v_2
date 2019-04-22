@@ -34,6 +34,7 @@
 #define CLWFinish clFinish
 #define CLWEnqueueNDRangeKernel clEnqueueNDRangeKernel
 #define CLWEnqueueReadBuffer clEnqueueReadBuffer
+#define CLWCreateContext clCreateContext
 
 
 #endif 

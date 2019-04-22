@@ -13,18 +13,23 @@
 #include <algorithm>
 #include <stdlib.h>
 #include "functiondefs.h"
+#include <string.h>
 
 #define SIZE 1024
 #define NANOSEC 1000000000LL
 
 std::string INPUT_FILE;
-std::string kernel_include = "C:\\Users\\Tyler\\Documents\\GPUMemTesting2\\OpenCLLitmus\\tests";
-//std::string kernel_include = "/home/quanto/IW/OpenCLLitmus/tests"; 
+//std::string kernel_include = "C:\\Users\\Tyler\\Documents\\GPUMemTesting2\\OpenCLLitmus\\tests";
+std::string kernel_include = "/home/jak4/iws19/OpenCLLitmus/tests"; 
 int LIST = 0;
 int PLATFORM_ID = 0;
 int DEVICE_ID = 0;
 int QUIET = 0;
 int USE_CHIP_CONFIG = 1;
+
+// fix later
+int ITERATIONS = 1000;
+int X_Y_STRIDE = 32;
 
 struct TestConfig
 {
@@ -155,6 +160,11 @@ std::string parse_args(int argc, char *argv[])
     {
     case 'D':
       kernel_defs << "-D " << optarg << " ";
+      if (strstr(optarg, "X_Y_STRIDE") != NULL) {
+	char *tok = strtok(optarg, "=");
+	tok = strtok(NULL, "=");
+	X_Y_STRIDE = atoi(tok);
+      }
       break;
     case 'q':
       QUIET = 1;
@@ -164,7 +174,7 @@ std::string parse_args(int argc, char *argv[])
       break;
     case 'i':
       errno = 0;
-      iterations = strtol(optarg, &end, 10);
+      ITERATIONS = strtol(optarg, &end, 10);
       if (errno != 0 || *end != '\0')
       {
         fprintf(stderr, "Invalid iterations '%s'. An integer must be specified.\n", optarg);
@@ -259,7 +269,7 @@ TestConfig parse_config(const std::string &config_str) {
 }
 
 // test is kernel string with the testing_common.h as part of the string
-int run_test(std::string test, std::string test_config, int iterations, int platform_id, int device_id, std::string options, std::string &ret_info) {
+ int run_test(std::string test, std::string test_config, int iterations, int x_y_stride, int platform_id, int device_id, std::string options, std::string &ret_info) {
 
   CLW_CLASS_WRAPPER;
   CL_Execution exec;
@@ -367,7 +377,7 @@ int run_test(std::string test, std::string test_config, int iterations, int plat
   check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 2, sizeof(cl_mem), &doutput));
   check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 3, sizeof(cl_mem), &dshuffled_ids));
   check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 4, sizeof(cl_mem), &dscratchpad));
-  check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 7, sizeof(cl_int), &dwarp_size));
+  check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 8, sizeof(cl_int), &dwarp_size));
 
   check_ocl(CLWSetKernelArg(exec.exec_kernels["check_outputs"], 0, sizeof(cl_mem), &doutput));
   check_ocl(CLWSetKernelArg(exec.exec_kernels["check_outputs"], 1, sizeof(cl_mem), &dresult));
@@ -382,10 +392,8 @@ int run_test(std::string test, std::string test_config, int iterations, int plat
 
   cl_int dist = 128;
   cl_int location = 64;
-  cl_int x_y_distance = dist;
 
   cl_int scratch_location = location;
-  cl_int offset = 3;
 
   int *histogram = (int *)malloc(sizeof(int) * cfg.hist_size);
   for (int i = 0; i < cfg.hist_size; i++)
@@ -397,8 +405,17 @@ int run_test(std::string test, std::string test_config, int iterations, int plat
   {
 
     check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 5, sizeof(cl_int), &scratch_location));
-    cl_int to_pass = x_y_distance + offset;
-    check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 6, sizeof(cl_int), &to_pass));
+    
+    // x_y_stride
+    int stride = (SIZE - 1) / X_Y_STRIDE;
+    cl_int x_loc = rand() % stride, y_loc;
+    int offset = rand() % x_y_stride;
+    do y_loc = rand() % stride; while (x_loc == y_loc);
+    x_loc = x_loc * x_y_stride + offset;
+    y_loc = y_loc * x_y_stride + offset;
+    
+    check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 6, sizeof(cl_int), &x_loc));
+    check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 7, sizeof(cl_int), &y_loc));
 
     // set up ids
     // mod by zero, if max local size is same and min
@@ -568,16 +585,16 @@ int main(int argc, char *argv[])
   size_t f_len;
   std::string tconfig = loadFile(test_config_file.c_str(), &f_len);
   std::string src0 = loadFile(kernel_file.c_str(), &f_len);
-  std::string t_common = kernel_include + "\\testing_common.h";
+  std::string t_common = kernel_include + "/testing_common.h";
   std::string src1 = loadFile(t_common.c_str(), &f_len);
-  std::string nvidia_atomics = kernel_include + "\\nvidia_atomics.h";
+  std::string nvidia_atomics = kernel_include + "/nvidia_atomics.h";
   std::string src2 = loadFile(nvidia_atomics.c_str(), &f_len);
   //run_test("", "", 1, 0, 0, "", to_print);
   std::string final_source = src2 + src1 + src0;
 
   //std::cout << final_source << std::endl;
 
-  run_test(final_source, tconfig, iterations, PLATFORM_ID, DEVICE_ID, opts, to_print);
+  run_test(final_source, tconfig, ITERATIONS, X_Y_STRIDE, PLATFORM_ID, DEVICE_ID, opts, to_print);
   std::cout << to_print;
   return 1;
 }
