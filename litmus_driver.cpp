@@ -407,9 +407,9 @@ TestConfig parse_config(const std::string &config_str) {
     check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 5, sizeof(cl_int), &scratch_location));
     
     // x_y_stride
-    int stride = (SIZE - 1) / X_Y_STRIDE;
+    int stride = ((SIZE) / x_y_stride) - 1;
     cl_int x_loc = rand() % stride, y_loc;
-    int offset = rand() % x_y_stride;
+    int offset = 0;
     do y_loc = rand() % stride; while (x_loc == y_loc);
     x_loc = x_loc * x_y_stride + offset;
     y_loc = y_loc * x_y_stride + offset;
