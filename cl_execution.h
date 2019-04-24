@@ -200,7 +200,6 @@ int compile_kernel(std::string source, const char * kernel_include, std::string 
     const char * source_c_str = source.c_str();
     size_t len = source.size();
 
-
     exec_program = CLWCreateProgramWithSource(exec_context, 1, (const char **)& source_c_str, &len, &err);
     if (err < 0) {
       return err;
@@ -233,9 +232,9 @@ int compile_kernel(std::string source, const char * kernel_include, std::string 
     //check_ocl(ret);
     
     if (err != CL_SUCCESS) {
-      char buffer[2048];
+      char buffer[32000];
       cl_program_build_info b_info = CL_PROGRAM_BUILD_LOG;
-      CLWGetProgramBuildInfo(exec_program, exec_device, b_info, 2048, buffer, NULL);
+      CLWGetProgramBuildInfo(exec_program, exec_device, b_info, 32000, buffer, NULL);
       std::string log(buffer);
       to_ret << log << std::endl;
       ret = to_ret.str();

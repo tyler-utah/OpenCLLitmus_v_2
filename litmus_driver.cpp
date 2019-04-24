@@ -20,7 +20,7 @@
 
 std::string INPUT_FILE;
 //std::string kernel_include = "C:\\Users\\Tyler\\Documents\\GPUMemTesting2\\OpenCLLitmus\\tests";
-std::string kernel_include = "/home/jak4/iws19/OpenCLLitmus/tests"; 
+std::string kernel_include = "/home/jak4/iws19/OpenCL_tests/interwg_base"; 
 int LIST = 0;
 int PLATFORM_ID = 0;
 int DEVICE_ID = 0;
