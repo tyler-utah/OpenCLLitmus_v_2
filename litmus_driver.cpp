@@ -356,9 +356,12 @@ TestConfig parse_config(const std::string &config_str) {
   check_ocl(err);
   cl_mem dscratchpad = CLWCreateBuffer(exec.exec_context, CL_MEM_READ_WRITE, sizeof(cl_int) * (512), NULL, &err);
   check_ocl(err);
+  cl_mem dbarrier_mem = CLWCreateBuffer(exec.exec_context, CL_MEM_READ_WRITE, sizeof(cl_int) * (512), NULL, &err);
+  check_ocl(err);
   cl_int dwarp_size = cConfig.warp_size;
 
   cl_int hga[SIZE], hgna[SIZE], houtput[SIZE];
+  cl_int hbarrier_mem[512];
   cl_int hresult;
   cl_int *hshuffled_ids = (cl_int *)malloc(sizeof(cl_int) * max_global_size);
 
@@ -377,7 +380,8 @@ TestConfig parse_config(const std::string &config_str) {
   check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 2, sizeof(cl_mem), &doutput));
   check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 3, sizeof(cl_mem), &dshuffled_ids));
   check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 4, sizeof(cl_mem), &dscratchpad));
-  check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 8, sizeof(cl_int), &dwarp_size));
+  check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 9, sizeof(cl_int), &dwarp_size));
+  check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 5, sizeof(cl_mem), &dbarrier_mem));
 
   check_ocl(CLWSetKernelArg(exec.exec_kernels["check_outputs"], 0, sizeof(cl_mem), &doutput));
   check_ocl(CLWSetKernelArg(exec.exec_kernels["check_outputs"], 1, sizeof(cl_mem), &dresult));
@@ -404,7 +408,7 @@ TestConfig parse_config(const std::string &config_str) {
   for (int i = 0; i < iterations; i++)
   {
 
-    check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 5, sizeof(cl_int), &scratch_location));
+    check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 6, sizeof(cl_int), &scratch_location));
     
     // x_y_stride
     int stride = ((SIZE) / x_y_stride) - 1;
@@ -414,8 +418,8 @@ TestConfig parse_config(const std::string &config_str) {
     x_loc = x_loc * x_y_stride + offset;
     y_loc = y_loc * x_y_stride + offset;
     
-    check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 6, sizeof(cl_int), &x_loc));
-    check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 7, sizeof(cl_int), &y_loc));
+    check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 7, sizeof(cl_int), &x_loc));
+    check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 8, sizeof(cl_int), &y_loc));
 
     // set up ids
     // mod by zero, if max local size is same and min
@@ -484,6 +488,9 @@ TestConfig parse_config(const std::string &config_str) {
     check_ocl(err);
 
     err = CLWEnqueueWriteBuffer(exec.exec_queue, doutput, CL_TRUE, 0, sizeof(cl_int) * (cfg.output_size), houtput, 0, NULL, NULL);
+    check_ocl(err);
+
+    err = CLWEnqueueWriteBuffer(exec.exec_queue, dbarrier_mem, CL_TRUE, 0, sizeof(cl_int) * (512), hbarrier_mem, 0, NULL, NULL);
     check_ocl(err);
 
     err = CLWFinish(exec.exec_queue);
