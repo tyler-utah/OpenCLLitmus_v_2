@@ -1,5 +1,6 @@
 set(CMAKE_AMDOPENCL "c:/Program\ Files\ (x86)/AMD\ APP\ SDK/3.0/")
 set(CMAKE_ADROIT "/usr/local/cuda/")
+set(CMAKE_AMD_LAPTOP "C:/Program\ Files\ (x86)/OCL_SDK_Light")
 
 FIND_PATH(OPENCL_INCLUDE_DIR
   NAMES
@@ -9,6 +10,7 @@ FIND_PATH(OPENCL_INCLUDE_DIR
   $ENV{INTELOCLSDKROOT}/include
   $ENV{NVSDKCOMPUTE_ROOT}/OpenCL/common/inc
   ${CMAKE_ADROIT}/include
+  ${CMAKE_AMD_LAPTOP}/include
   # Legacy Stream SDK
   $ENV{ATISTREAMSDKROOT}/include
   ${CMAKE_AMDOPENCL}/include)
@@ -20,6 +22,7 @@ IF(CMAKE_SIZEOF_VOID_P EQUAL 4)
     /root/mali/fbdev
     ${CMAKE_AMDOPENCL}/lib/x86_64
     $ENV{NVSDKCOMPUTE_ROOT}/OpenCL/common/lib/Win32
+	${CMAKE_AMD_LAPTOP}/lib/x86
     # Legacy Stream SDK
     $ENV{ATISTREAMSDKROOT}/lib/x86)
 ELSEIF(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -30,6 +33,7 @@ ELSEIF(CMAKE_SIZEOF_VOID_P EQUAL 8)
     /root/mali/fbdev
     ${CMAKE_AMDOPENCL}/lib/x86_64
     ${CMAKE_ADROIT}/lib64
+	${CMAKE_AMD_LAPTOP}/lib/x86_64
     # Legacy stream SDK
     $ENV{ATISTREAMSDKROOT}/lib/x86_64)
 ENDIF(CMAKE_SIZEOF_VOID_P EQUAL 4)
