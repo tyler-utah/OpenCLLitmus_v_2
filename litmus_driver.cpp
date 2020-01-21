@@ -14,13 +14,14 @@
 #include <stdlib.h>
 #include "functiondefs.h"
 #include <string.h>
+#include <CL/cl.hpp>
 
 #define SIZE 1024
 #define NANOSEC 1000000000LL
 
 std::string INPUT_FILE;
 //std::string kernel_include = "C:\\Users\\Tyler\\Documents\\GPUMemTesting2\\OpenCLLitmus\\tests";
-std::string kernel_include = "/home/jak4/iws19/OpenCL_tests/interwg_base"; 
+std::string kernel_include = "/localdisk/jkirkham/GPU_Conformance/OpenCL_tests/interwg_base"; 
 int LIST = 0;
 int PLATFORM_ID = 0;
 int DEVICE_ID = 0;
@@ -57,7 +58,8 @@ void populate_ChipConfigMaps()
   ChipConfig Inteli75600u = { 4, 1, 4, 1 };
   ChipConfig TeslaK20m = { 1024, 512, 32, 32 };
   ChipConfig TeslaK40c = { 1024, 512, 32, 32 };
-
+  ChipConfig IntelNeo = { 256, 1, 16, 8 };
+  
   ChipConfigMaps["default"] = defaultChipConfig;
   ChipConfigMaps["Intel(R) Core(TM) i7-5600U CPU @ 2.60GHz"] = Inteli75600u;
   ChipConfigMaps["Intel(R) HD Graphics 5500"] = IntelHD5500;
@@ -65,10 +67,33 @@ void populate_ChipConfigMaps()
   ChipConfigMaps["GeForce 940M"] = Nvidia940M;
   ChipConfigMaps["GeForce GTX 960M"] = Nvidia960M;
   ChipConfigMaps["Tesla K40c"] = TeslaK40c;
+  ChipConfigMaps["Intel(R) Gen9 HD Graphics NEO"] = IntelNeo;
 }
 
 //From IWOCL tutorial (needs attribution)
 cl_platform_id *platforms;
+
+/* unsigned getDeviceList(std::vector<std::vector<cl::Device> >& devices, int &err)
+{
+  // Get list of platforms
+  std::vector<cl::Platform> platforms;
+  err = cl::Platform::get(&platforms);
+  if (err < 0) {
+    return err;
+  }
+  
+  // Enumerate devices
+  for (unsigned int i = 0; i < platforms.size(); i++)
+    {
+      std::vector<cl::Device> plat_devices;
+      platforms[i].getDevices(CL_DEVICE_TYPE_ALL, &plat_devices);
+      devices.push_back(plat_devices);
+      //devices.insert(devices.end(), plat_devices.begin(), plat_devices.end());
+    }
+
+  return devices.size();
+} */
+
 unsigned getDeviceList(std::vector<std::vector<cl_device_id>> &devices, int &err) {
   CLW_CLASS_WRAPPER;
   // Get list of platforms
@@ -76,12 +101,14 @@ unsigned getDeviceList(std::vector<std::vector<cl_device_id>> &devices, int &err
   err = CLWGetPlatformIDs(0, NULL, &num_plats);
   platforms = (cl_platform_id *)malloc(sizeof(cl_platform_id)*num_plats);
   CLWGetPlatformIDs(num_plats, platforms, NULL);
+  std::cout << platforms[1];
   if (err < 0) {
     return err;
   }
 
-  // Enumerate devices
-  for (unsigned int i = 0; i < num_plats; i++) {
+  // Enumerate devices -- need to fix to handle clover
+  for (unsigned int i = 0; i < 1; i++) {
+    //if (CL_Execution::getPlatformName(platforms[i], err) != // fix
     //std::vector<cl::Device> plat_devices;
     cl_uint num_devices = 0;
     err = CLWGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices);
@@ -400,9 +427,12 @@ TestConfig parse_config(const std::string &config_str) {
   cl_int scratch_location = location;
 
   int *histogram = (int *)malloc(sizeof(int) * cfg.hist_size);
+  int *result_stream = (int *)malloc(sizeof(int) * iterations);
+
   for (int i = 0; i < cfg.hist_size; i++)
   {
     histogram[i] = 0;
+    result_stream[i] = 0;
   }
 
   for (int i = 0; i < iterations; i++)
@@ -515,6 +545,7 @@ TestConfig parse_config(const std::string &config_str) {
     check_ocl(err);
 
     histogram[hresult]++;
+    result_stream[i] = hresult;
   }
 
   now = std::chrono::high_resolution_clock::now();
@@ -522,12 +553,17 @@ TestConfig parse_config(const std::string &config_str) {
   time = end_time - begin_time;
   float time_float = static_cast<float>(time) / static_cast<float>(NANOSEC);
 
-  return_str << std::endl << "RESULTS: " << std::endl;
+  /* return_str << std::endl << "RESULTS: " << std::endl;
   return_str << "-------------------" << std::endl;
   for (int i = 0; i < cfg.hist_size; i++) {
     return_str << cfg.hist_strings[i] << histogram[i] << std::endl;
 
   }
+  */
+  for (int i = 0; i < iterations; i++) {
+    return_str << "&&:" << result_stream[i] << std::endl;
+  }
+  /*
   return_str << std::endl;
   return_str << "RATES" << std::endl;
   return_str << "-------------------" << std::endl;
@@ -535,7 +571,7 @@ TestConfig parse_config(const std::string &config_str) {
   return_str << "time (seconds) : " << time_float << std::endl;
   return_str << "tests/sec      : " << static_cast<float>(iterations) / time_float << std::endl;
   return_str << std::endl;
-
+  */
 
   free(shuffled_wg_order);
   free(temp_id_ordering);
