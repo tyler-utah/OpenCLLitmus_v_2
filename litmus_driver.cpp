@@ -15,6 +15,7 @@
 #include "functiondefs.h"
 #include <string.h>
 #include <CL/cl.hpp>
+#include <time.h>
 
 #define SIZE 1024
 #define NANOSEC 1000000000LL
@@ -31,6 +32,9 @@ int USE_CHIP_CONFIG = 1;
 // fix later
 int ITERATIONS = 1000;
 int X_Y_STRIDE = 32;
+int PATCH_SIZE = 32;
+int CONC_STRESS = 1;
+int CONC_SPLIT = 0;
 
 struct TestConfig
 {
@@ -192,6 +196,21 @@ std::string parse_args(int argc, char *argv[])
 	tok = strtok(NULL, "=");
 	X_Y_STRIDE = atoi(tok);
       }
+      else if (strstr(optarg, "PATCH_SIZE") != NULL) {
+	char *tok = strtok(optarg, "=");
+	tok = strtok(NULL, "=");
+	PATCH_SIZE = atoi(tok);
+      }
+      else if (strstr(optarg, "CONC_STRESS") != NULL) {
+	char *tok = strtok(optarg, "=");
+	tok = strtok(NULL, "=");
+	CONC_STRESS = atoi(tok);
+      }
+      else if (strstr(optarg, "CONC_SPLIT") != NULL) {
+	char *tok = strtok(optarg, "=");
+	tok = strtok(NULL, "=");
+	CONC_SPLIT = atoi(tok);
+      }
       break;
     case 'q':
       QUIET = 1;
@@ -304,6 +323,8 @@ TestConfig parse_config(const std::string &config_str) {
   ChipConfig cConfig;
   int err = 0;
 
+  srand(time(NULL));
+
   populate_ChipConfigMaps();
   std::vector<std::vector<cl_device_id>> devices;
   getDeviceList(devices, err);
@@ -381,9 +402,11 @@ TestConfig parse_config(const std::string &config_str) {
   check_ocl(err);
   cl_mem dshuffled_ids = CLWCreateBuffer(exec.exec_context, CL_MEM_READ_WRITE, sizeof(cl_int) * (max_global_size), NULL, &err);
   check_ocl(err);
-  cl_mem dscratchpad = CLWCreateBuffer(exec.exec_context, CL_MEM_READ_WRITE, sizeof(cl_int) * (512), NULL, &err);
+  cl_mem dscratchpad = CLWCreateBuffer(exec.exec_context, CL_MEM_READ_WRITE, sizeof(cl_int) * (1<<21), NULL, &err);
   check_ocl(err);
   cl_mem dbarrier_mem = CLWCreateBuffer(exec.exec_context, CL_MEM_READ_WRITE, sizeof(cl_int) * (512), NULL, &err);
+  check_ocl(err);
+  cl_mem dscratchpad_location = CLWCreateBuffer(exec.exec_context, CL_MEM_READ_WRITE, sizeof(cl_int) * (max_global_size), NULL, &err);
   check_ocl(err);
   cl_int dwarp_size = cConfig.warp_size;
 
@@ -391,10 +414,12 @@ TestConfig parse_config(const std::string &config_str) {
   cl_int hbarrier_mem[512];
   cl_int hresult;
   cl_int *hshuffled_ids = (cl_int *)malloc(sizeof(cl_int) * max_global_size);
-
+  cl_int *hscratchpad_location = (cl_int *)malloc(sizeof(cl_int) * max_global_size);
+  
   for (int i = 0; i < max_global_size; i++)
   {
     hshuffled_ids[i] = i;
+    hscratchpad_location[i] = i;
   }
 
   for (int i = 0; i < SIZE; i++)
@@ -409,6 +434,7 @@ TestConfig parse_config(const std::string &config_str) {
   check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 4, sizeof(cl_mem), &dscratchpad));
   check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 9, sizeof(cl_int), &dwarp_size));
   check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 5, sizeof(cl_mem), &dbarrier_mem));
+  check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 6, sizeof(cl_mem), &dscratchpad_location));
 
   check_ocl(CLWSetKernelArg(exec.exec_kernels["check_outputs"], 0, sizeof(cl_mem), &doutput));
   check_ocl(CLWSetKernelArg(exec.exec_kernels["check_outputs"], 1, sizeof(cl_mem), &dresult));
@@ -420,7 +446,15 @@ TestConfig parse_config(const std::string &config_str) {
   int *temp_id_ordering = (int *)malloc(max_global_size*sizeof(int));
   int *shuffled_warp_order = (int *)malloc((max_local_size / dwarp_size) * sizeof(int));
 
+  int eff_scratch_size = 1<<20;
+  int num_patches = eff_scratch_size / PATCH_SIZE;
 
+  int *patch_assignments = (int *)malloc(CONC_STRESS * sizeof(int));
+
+  for (int i = 0; i < CONC_STRESS; i++) {
+    patch_assignments[i] = i;
+  }
+  
   cl_int dist = 128;
   cl_int location = 64;
 
@@ -437,8 +471,6 @@ TestConfig parse_config(const std::string &config_str) {
 
   for (int i = 0; i < iterations; i++)
   {
-
-    check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 6, sizeof(cl_int), &scratch_location));
     
     // x_y_stride
     int stride = ((SIZE) / x_y_stride) - 1;
@@ -453,17 +485,19 @@ TestConfig parse_config(const std::string &config_str) {
 
     // set up ids
     // mod by zero, if max local size is same and min
-    int local_size = (rand() % (max_local_size - cConfig.min_local_size)) + cConfig.min_local_size;
+    int warp_size = dwarp_size; // add to chip config before amd testing
+    int local_size = 0;
+    do local_size = (rand() % (max_local_size - cConfig.min_local_size)) + cConfig.min_local_size; while (local_size % warp_size != 0);
     int global_size = occupancy * local_size;
     int wg_count = global_size / local_size;
-    int warp_size = dwarp_size; // add to chip config before amd testing
+    
     int warps_per_wg = local_size / warp_size;
     int remainder_threads = local_size % warp_size;
 
     // id shuffle
     for (int j = 0; j < global_size; j++)
     {
-      hshuffled_ids[j] = i;
+      hshuffled_ids[j] = j;
     }
     for (int i = 0; i < wg_count; i++)
     {
@@ -483,6 +517,17 @@ TestConfig parse_config(const std::string &config_str) {
         std::random_shuffle(&temp_id_ordering[i * local_size + j * warp_size], &temp_id_ordering[i * local_size + (j + 1) * warp_size]);
       }
     }
+
+    /* for (int i = 0; i < global_size; i++) {
+      for (int j = i + 1; j < global_size; j++) {
+	if (temp_id_ordering[i] == temp_id_ordering[j]) {
+	  std::cout << "Temp ID Duplicate (TEMP) at" << i << "," << j << "," << hshuffled_ids[i] << std::endl;
+	  assert(0);
+	}
+      }
+      } */
+
+    
     for (int i = 0; i < wg_count; i++)
     {
 
@@ -508,9 +553,44 @@ TestConfig parse_config(const std::string &config_str) {
         }
       }
     }
+
+    /* for (int i = 0; i < global_size; i++) {
+      for (int j = i + 1; j < global_size; j++) {
+	if (hshuffled_ids[i] == hshuffled_ids[j]) {
+	  std::cout << "Duplicate at" << i << "," << j << "," << hshuffled_ids[i] << std::endl;
+	  assert(0);
+	}
+      }
+      } */
+
+    // assign patches per stressing group)
+    for (int i = 0; i < CONC_STRESS; i++) {
+      patch_assignments[i] = rand() % num_patches;
+    }
+    // assign individual locations
+    int per_group = (global_size / CONC_STRESS) + 1;
+    if (global_size % CONC_STRESS == 0) {
+      per_group = per_group - 1;
+    }
+    
+    for (int i = 0; i < global_size; i++) {
+      if (CONC_SPLIT == 0) {
+	int group = i / per_group;
+	hscratchpad_location[i] = patch_assignments[group] * PATCH_SIZE + (rand() % PATCH_SIZE);
+      }
+      else {
+	int group = i % CONC_STRESS;
+	hscratchpad_location[i] = patch_assignments[group] * PATCH_SIZE + (rand() % PATCH_SIZE);
+      }
+    }
+      
+      
     err = CLWEnqueueWriteBuffer(exec.exec_queue, dshuffled_ids, CL_TRUE, 0, sizeof(cl_int) * (global_size), hshuffled_ids, 0, NULL, NULL);
     check_ocl(err);
 
+    err = CLWEnqueueWriteBuffer(exec.exec_queue, dscratchpad_location, CL_TRUE, 0, sizeof(cl_int) * (global_size), hscratchpad_location, 0, NULL, NULL);
+    check_ocl(err);
+    
     err = CLWEnqueueWriteBuffer(exec.exec_queue, dga, CL_TRUE, 0, sizeof(cl_int) * (SIZE), hga, 0, NULL, NULL);
     check_ocl(err);
 
@@ -558,25 +638,34 @@ TestConfig parse_config(const std::string &config_str) {
   for (int i = 0; i < cfg.hist_size; i++) {
     return_str << cfg.hist_strings[i] << histogram[i] << std::endl;
 
-  }
-  */
+    } */
+
+  
   for (int i = 0; i < iterations; i++) {
+    //if (!(result_stream[i] >= 0 && result_stream[i] < 4)) {
     return_str << "&&:" << result_stream[i] << std::endl;
+      //}
   }
-  /*
-  return_str << std::endl;
+
+  // return_str << cfg.hist_strings[4] << histogram[4] << std::endl;
+  
+  /* return_str << std::endl;
   return_str << "RATES" << std::endl;
   return_str << "-------------------" << std::endl;
   return_str << "tests          : " << iterations << std::endl;
   return_str << "time (seconds) : " << time_float << std::endl;
   return_str << "tests/sec      : " << static_cast<float>(iterations) / time_float << std::endl;
-  return_str << std::endl;
   */
+  return_str << std::endl;
+  
 
   free(shuffled_wg_order);
   free(temp_id_ordering);
   free(shuffled_warp_order);
   free(platforms);
+  free(patch_assignments);
+  free(result_stream);
+  free(histogram);
   ret_info = return_str.str();
   return 1;
 }
