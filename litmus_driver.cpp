@@ -23,6 +23,8 @@
 std::string INPUT_FILE;
 //std::string kernel_include = "C:\\Users\\Tyler\\Documents\\GPUMemTesting2\\OpenCLLitmus\\tests";
 std::string kernel_include = "/localdisk/jkirkham/GPU_Conformance/OpenCL_tests/interwg_base"; 
+//std::string kernel_include = "/nfs/hen2-10/homes/jkirkham/GPUTesting/OpenCL_tests/interwg_base";
+
 int LIST = 0;
 int PLATFORM_ID = 0;
 int DEVICE_ID = 0;
@@ -721,8 +723,10 @@ int main(int argc, char *argv[])
   std::string src1 = loadFile(t_common.c_str(), &f_len);
   std::string nvidia_atomics = kernel_include + "/nvidia_atomics.h";
   std::string src2 = loadFile(nvidia_atomics.c_str(), &f_len);
+  std::string oc1x_atomics = kernel_include + "/cl_1x_atomics.cl";
+  std::string src3 = loadFile(oc1x_atomics.c_str(), &f_len);
   //run_test("", "", 1, 0, 0, "", to_print);
-  std::string final_source = src2 + src1 + src0;
+  std::string final_source = src3 + src2 + src1 + src0;
 
   //std::cout << final_source << std::endl;
 
