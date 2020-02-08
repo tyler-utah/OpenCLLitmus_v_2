@@ -17,7 +17,7 @@
 #include <CL/cl.hpp>
 #include <time.h>
 
-#define SIZE 1024
+#define SIZE 10240
 #define NANOSEC 1000000000LL
 
 std::string INPUT_FILE;
