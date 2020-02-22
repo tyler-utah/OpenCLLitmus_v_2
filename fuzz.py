@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import time 
 iterations_per = raw_input("Enter number of iterations per sample: ")
-test = raw_input("Enter litmus test: ")
+test_in = raw_input("Enter litmus test: ")
 iterations = raw_input("Number of samples: ")
 batch_name = raw_input("Batch name: ")
 
@@ -49,6 +49,7 @@ iteration_id_hist = []
 patch_size_hist = []
 conc_stress_hist = []
 conc_split_hist = []
+lit_test_hist = []
 
 for j in range(int(iterations)):
     cmd = './build/bin/litmus_exe -i ' + iterations_per
@@ -93,33 +94,36 @@ for j in range(int(iterations)):
     conc_split_tag = " -D CONC_SPLIT=" + str(conc_split_val)
     
     flag = barrier_tag + shuffle_tag + stress_tag + stress_iterations_tag + stress_pattern_tag + prestress_tag + prestress_iterations_tag + prestress_pattern_tag + x_y_stride_tag + patch_size_tag + conc_stress_tag + conc_split_tag
-    
-    cmd += flag + ' ../OpenCL_tests/interwg_base/' + test
-    output = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True) 
-    
-    i = 0
-    for row in output.stdout:
-        if '&&' in row and ':' in row:
-            key, val = row.split(':')
-            results_hist.append(int(val.strip()))
-        else:
-            continue
-        barrier_hist.append(barrier_val)
-        shuffle_hist.append(shuffle_val)
-        stress_hist.append(stress_val)
-        stress_it_hist.append(stress_it_val)
-        stress_pat_hist.append(stress_pat_val)
-        prestress_hist.append(prestress_val)
-        prestress_it_hist.append(prestress_it_val)
-        prestress_pat_hist.append(prestress_pat_val)
-        stride_hist.append(x_y_stride_val)
-        batch_id_hist.append(batch_name)
-        sample_id_hist.append(j)
-        iteration_id_hist.append(i)
-        patch_size_hist.append(patch_size_val)
-        conc_stress_hist.append(conc_stress_val)
-        conc_split_hist.append(conc_split_val)
-        i += 1
+
+    for test in ['MP','SB','LB']:
+        cmd = './build/bin/litmus_exe -i ' + iterations_per
+        cmd += flag + ' ../OpenCL_tests/interwg_base/' + test
+        output = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True) 
+        
+        i = 0
+        for row in output.stdout:
+            if '&&' in row and ':' in row:
+                key, val = row.split(':')
+                results_hist.append(int(val.strip()))
+            else:
+                continue
+            barrier_hist.append(barrier_val)
+            shuffle_hist.append(shuffle_val)
+            stress_hist.append(stress_val)
+            stress_it_hist.append(stress_it_val)
+            stress_pat_hist.append(stress_pat_val)
+            prestress_hist.append(prestress_val)
+            prestress_it_hist.append(prestress_it_val)
+            prestress_pat_hist.append(prestress_pat_val)
+            stride_hist.append(x_y_stride_val)
+            batch_id_hist.append(batch_name)
+            sample_id_hist.append(j)
+            iteration_id_hist.append(i)
+            patch_size_hist.append(patch_size_val)
+            conc_stress_hist.append(conc_stress_val)
+            conc_split_hist.append(conc_split_val)
+            lit_test_hist.append(test)
+            i += 1
         ##if sum(cumulative) != 0:
     ##    p_val = chisquare([x + 1 for x in results], [y + 1 for y in cumulative])[1]
     ##    old_cumulative = list(cumulative)
@@ -142,9 +146,9 @@ for j in range(int(iterations)):
     # print(results)
    ## iterations = sum(cumulative)
 
-data = {'BARRIER' : barrier_hist, 'ID_SHUFFLE' : shuffle_hist, 'MEM_STRESS' : stress_hist, 'STRESS_ITERATIONS' : stress_it_hist, 'STRESS_PATTERN' : stress_pat_hist, 'PRE_STRESS' : prestress_hist, 'PRE_STRESS_ITERATIONS' : prestress_it_hist, 'PRE_STRESS_PATTERN' : prestress_pat_hist, 'X_Y_STRIDE' : stride_hist, 'BATCH_NAME' : batch_id_hist, 'SAMPLE_ID' : sample_id_hist, 'ITERATION_NUMBER' : iteration_id_hist, 'RESULT' : results_hist, 'PATCH_SIZE' : patch_size_hist, 'CONC_STRESS' : conc_stress_hist, 'CONC_SPLIT' : conc_split_hist}
+data = {'BARRIER' : barrier_hist, 'ID_SHUFFLE' : shuffle_hist, 'MEM_STRESS' : stress_hist, 'STRESS_ITERATIONS' : stress_it_hist, 'STRESS_PATTERN' : stress_pat_hist, 'PRE_STRESS' : prestress_hist, 'PRE_STRESS_ITERATIONS' : prestress_it_hist, 'PRE_STRESS_PATTERN' : prestress_pat_hist, 'X_Y_STRIDE' : stride_hist, 'BATCH_NAME' : batch_id_hist, 'SAMPLE_ID' : sample_id_hist, 'ITERATION_NUMBER' : iteration_id_hist, 'RESULT' : results_hist, 'PATCH_SIZE' : patch_size_hist, 'CONC_STRESS' : conc_stress_hist, 'CONC_SPLIT' : conc_split_hist, 'LITMUS_TEST' : lit_test_hist}
 
 df = pd.DataFrame(data)
-df.to_csv(batch_name + "_" + test + "_RESULTS.csv", index=False)
+df.to_csv(batch_name + "_" + test_in + "_RESULTS.csv", index=False)
 
 print("--- %s seconds ---" % (time.time() - start_time))

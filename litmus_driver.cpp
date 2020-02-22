@@ -64,7 +64,7 @@ void populate_ChipConfigMaps()
   ChipConfig Inteli75600u = { 4, 1, 4, 1 };
   ChipConfig TeslaK20m = { 1024, 512, 32, 32 };
   ChipConfig TeslaK40c = { 1024, 512, 32, 32 };
-  ChipConfig IntelNeo = { 256, 1, 16, 8 };
+  ChipConfig IntelNeo = { 256, 32, 16, 8 };
   ChipConfig MaliMP71 = { 1024, 256, 8, 8 };
   
   ChipConfigMaps["default"] = defaultChipConfig;
