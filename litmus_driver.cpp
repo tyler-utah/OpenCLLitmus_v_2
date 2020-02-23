@@ -63,6 +63,7 @@ void populate_ChipConfigMaps()
   ChipConfig TeslaK20m = { 1024, 512, 32, 32 };
   ChipConfig TeslaK40c = { 1024, 512, 32, 32 };
   ChipConfig IntelNeo = { 256, 1, 16, 8 };
+  ChipConfig Vega64 = { 256, 32, 128, 64};
   
   ChipConfigMaps["default"] = defaultChipConfig;
   ChipConfigMaps["Intel(R) Core(TM) i7-5600U CPU @ 2.60GHz"] = Inteli75600u;
@@ -71,6 +72,7 @@ void populate_ChipConfigMaps()
   ChipConfigMaps["GeForce 940M"] = Nvidia940M;
   ChipConfigMaps["GeForce GTX 960M"] = Nvidia960M;
   ChipConfigMaps["Tesla K40c"] = TeslaK40c;
+  ChipConfigMaps["gfx900"] = Vega64;
   ChipConfigMaps["Intel(R) Gen9 HD Graphics NEO"] = IntelNeo;
 }
 
