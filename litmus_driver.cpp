@@ -17,12 +17,14 @@
 #include <CL/cl.hpp>
 #include <time.h>
 
-#define SIZE 1024
+#define SIZE 10240
 #define NANOSEC 1000000000LL
 
 std::string INPUT_FILE;
 //std::string kernel_include = "C:\\Users\\Tyler\\Documents\\GPUMemTesting2\\OpenCLLitmus\\tests";
 std::string kernel_include = "/localdisk/jkirkham/GPU_Conformance/OpenCL_tests/interwg_base"; 
+//std::string kernel_include = "/nfs/hen2-10/homes/jkirkham/GPUTesting/OpenCL_tests/interwg_base";
+
 int LIST = 0;
 int PLATFORM_ID = 0;
 int DEVICE_ID = 0;
@@ -62,8 +64,9 @@ void populate_ChipConfigMaps()
   ChipConfig Inteli75600u = { 4, 1, 4, 1 };
   ChipConfig TeslaK20m = { 1024, 512, 32, 32 };
   ChipConfig TeslaK40c = { 1024, 512, 32, 32 };
-  ChipConfig IntelNeo = { 256, 1, 16, 8 };
   ChipConfig Vega64 = { 256, 32, 128, 64};
+  ChipConfig IntelNeo = { 256, 32, 16, 8 };
+  ChipConfig MaliMP71 = { 1024, 256, 8, 8 };
   
   ChipConfigMaps["default"] = defaultChipConfig;
   ChipConfigMaps["Intel(R) Core(TM) i7-5600U CPU @ 2.60GHz"] = Inteli75600u;
@@ -74,6 +77,7 @@ void populate_ChipConfigMaps()
   ChipConfigMaps["Tesla K40c"] = TeslaK40c;
   ChipConfigMaps["gfx900"] = Vega64;
   ChipConfigMaps["Intel(R) Gen9 HD Graphics NEO"] = IntelNeo;
+  ChipConfigMaps["Mali-G71"] = MaliMP71;
 }
 
 //From IWOCL tutorial (needs attribution)
@@ -723,8 +727,10 @@ int main(int argc, char *argv[])
   std::string src1 = loadFile(t_common.c_str(), &f_len);
   std::string nvidia_atomics = kernel_include + "/nvidia_atomics.h";
   std::string src2 = loadFile(nvidia_atomics.c_str(), &f_len);
+  std::string oc1x_atomics = kernel_include + "/cl_1x_atomics.cl";
+  std::string src3 = loadFile(oc1x_atomics.c_str(), &f_len);
   //run_test("", "", 1, 0, 0, "", to_print);
-  std::string final_source = src2 + src1 + src0;
+  std::string final_source = src3 + src2 + src1 + src0;
 
   //std::cout << final_source << std::endl;
 
