@@ -22,7 +22,8 @@
 
 std::string INPUT_FILE;
 //std::string kernel_include = "C:\\Users\\Tyler\\Documents\\GPUMemTesting2\\OpenCLLitmus\\tests";
-std::string kernel_include = "/localdisk/jkirkham/GPU_Conformance/OpenCL_tests/interwg_base"; 
+//std::string kernel_include = "/localdisk/jkirkham/GPU_Conformance/OpenCL_tests/interwg_base";
+std::string kernel_include = "/home/odroid/Documents/github/OpenCL_tests/interwg_base";
 //std::string kernel_include = "/nfs/hen2-10/homes/jkirkham/GPUTesting/OpenCL_tests/interwg_base";
 
 int LIST = 0;
@@ -67,6 +68,7 @@ void populate_ChipConfigMaps()
   ChipConfig Vega64 = { 256, 32, 128, 64};
   ChipConfig IntelNeo = { 256, 32, 16, 8 };
   ChipConfig MaliMP71 = { 1024, 256, 8, 8 };
+  ChipConfig MaliT628 = { 256, 32, 8, 1 };
   
   ChipConfigMaps["default"] = defaultChipConfig;
   ChipConfigMaps["Intel(R) Core(TM) i7-5600U CPU @ 2.60GHz"] = Inteli75600u;
@@ -78,6 +80,7 @@ void populate_ChipConfigMaps()
   ChipConfigMaps["gfx900"] = Vega64;
   ChipConfigMaps["Intel(R) Gen9 HD Graphics NEO"] = IntelNeo;
   ChipConfigMaps["Mali-G71"] = MaliMP71;
+  ChipConfigMaps["Mali-T628"] = MaliT628;
 }
 
 //From IWOCL tutorial (needs attribution)
@@ -355,6 +358,9 @@ TestConfig parse_config(const std::string &config_str) {
   exec.exec_platform = platforms[PLATFORM_ID];
 
   return_str << "Using Device: " << exec.getExecDeviceName(err) << "\n";
+  check_ocl(err);
+
+  return_str << "Compute Units: " << exec.get_SMs() << "\n";
   check_ocl(err);
 
   return_str << "Driver Version: " << exec.getExecDriverVersion(err) << "\n";
