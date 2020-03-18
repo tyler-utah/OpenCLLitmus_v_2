@@ -54,6 +54,8 @@ lit_test_hist = []
 for j in range(int(iterations)):
     cmd = './build/bin/litmus_exe -i ' + iterations_per
     # results = [0, 0, 0, 0]
+    if (j % 100 == 0):
+            print(str(j) + " Iterations complete out of " + str(iterations))
 
     barrier_val = np.random.choice(barrier_switch, p=[0.1, 0.9])
     barrier_tag = " -D BARRIER=" + str(barrier_val)
