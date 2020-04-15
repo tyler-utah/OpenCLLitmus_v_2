@@ -22,6 +22,7 @@
 
 std::string INPUT_FILE;
 //std::string kernel_include = "C:\\Users\\Tyler\\Documents\\GPUMemTesting2\\OpenCLLitmus\\tests";
+
 std::string kernel_include = "/localdisk/jkirkham/GPU_Conformance/OpenCL_tests/interwg_base";
 //std::string kernel_include = "/home/odroid/Documents/github/OpenCL_tests/interwg_base";
 //std::string kernel_include = "/nfs/hen2-10/homes/jkirkham/GPUTesting/OpenCL_tests/interwg_base";
@@ -450,6 +451,8 @@ TestConfig parse_config(const std::string &config_str) {
 
   check_ocl(CLWSetKernelArg(exec.exec_kernels["check_outputs"], 0, sizeof(cl_mem), &doutput));
   check_ocl(CLWSetKernelArg(exec.exec_kernels["check_outputs"], 1, sizeof(cl_mem), &dresult));
+  check_ocl(CLWSetKernelArg(exec.exec_kernels["check_outputs"], 2, sizeof(cl_mem), &dga));
+    
 
   auto now = std::chrono::high_resolution_clock::now();
   unsigned long long begin_time, end_time, time;
@@ -494,6 +497,10 @@ TestConfig parse_config(const std::string &config_str) {
     
     check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 7, sizeof(cl_int), &x_loc));
     check_ocl(CLWSetKernelArg(exec.exec_kernels["litmus_test"], 8, sizeof(cl_int), &y_loc));
+
+    check_ocl(CLWSetKernelArg(exec.exec_kernels["check_outputs"], 3, sizeof(cl_int), &x_loc));
+    check_ocl(CLWSetKernelArg(exec.exec_kernels["check_outputs"], 4, sizeof(cl_int), &y_loc));
+
 
     // set up ids
     // mod by zero, if max local size is same and min
