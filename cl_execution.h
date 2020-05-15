@@ -191,7 +191,7 @@ public:
   
   
   //roughly from IWOCL tutorial (needs attribution)
-int compile_kernel(std::string source, const char * kernel_include, std::string kernel_defs, int &err, std::string &ret) {
+  int compile_kernel(std::string source, std::string kernel_include, std::string kernel_defs, int &err, std::string &ret) {
 
     CLW_CLASS_WRAPPER;
 
@@ -213,7 +213,7 @@ int compile_kernel(std::string source, const char * kernel_include, std::string 
     //options << " -cl-fast-relaxed-math";
     
     //Include the rt_device sources
-    //options << "-I" << kernel_include << " ";
+    options << "-I" << kernel_include << " ";
 
     options <<  kernel_defs;
 
@@ -221,7 +221,7 @@ int compile_kernel(std::string source, const char * kernel_include, std::string 
     //Check to see if we're OpenCL 2.0
     options << check_ocl2x(err);
 
-	  options << get_vendor_option(err);
+    options << get_vendor_option(err);
     
     to_ret << "FLAGS: " << options.str() << std::endl;
 

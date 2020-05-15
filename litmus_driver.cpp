@@ -74,6 +74,7 @@ void populate_ChipConfigMaps()
   ChipConfigMaps["default"] = defaultChipConfig;
   ChipConfigMaps["Intel(R) Core(TM) i7-5600U CPU @ 2.60GHz"] = Inteli75600u;
   ChipConfigMaps["Intel(R) HD Graphics 5500"] = IntelHD5500;
+  ChipConfigMaps["Intel(R) Gen8 HD Graphics NEO"] = IntelHD5500;
   ChipConfigMaps["Tesla K20m"] = TeslaK20m;
   ChipConfigMaps["GeForce 940M"] = Nvidia940M;
   ChipConfigMaps["GeForce GTX 960M"] = Nvidia960M;
@@ -389,7 +390,7 @@ TestConfig parse_config(const std::string &config_str) {
   check_ocl(err);
 
   std::string tmp_str;
-  err = exec.compile_kernel(test.c_str(), "", options, err, tmp_str);
+  err = exec.compile_kernel(test.c_str(), kernel_include, options, err, tmp_str);
   return_str << tmp_str;
   check_ocl(err);
 
