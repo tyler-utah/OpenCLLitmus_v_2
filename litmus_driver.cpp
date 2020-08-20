@@ -654,29 +654,28 @@ TestConfig parse_config(const std::string &config_str) {
   time = end_time - begin_time;
   float time_float = static_cast<float>(time) / static_cast<float>(NANOSEC);
 
-  /* return_str << std::endl << "RESULTS: " << std::endl;
+  return_str << std::endl << "RESULTS: " << std::endl;
   return_str << "-------------------" << std::endl;
   for (int i = 0; i < cfg.hist_size; i++) {
     return_str << cfg.hist_strings[i] << histogram[i] << std::endl;
 
-    } */
+    } 
 
   
-  for (int i = 0; i < iterations; i++) {
+  /*for (int i = 0; i < iterations; i++) {
     //if (!(result_stream[i] >= 0 && result_stream[i] < 4)) {
     return_str << "&&:" << result_stream[i] << std::endl;
       //}
-  }
+      }*/
 
-  // return_str << cfg.hist_strings[4] << histogram[4] << std::endl;
+  return_str << cfg.hist_strings[4] << histogram[4] << std::endl;
   
-  /* return_str << std::endl;
+  return_str << std::endl;
   return_str << "RATES" << std::endl;
   return_str << "-------------------" << std::endl;
   return_str << "tests          : " << iterations << std::endl;
   return_str << "time (seconds) : " << time_float << std::endl;
   return_str << "tests/sec      : " << static_cast<float>(iterations) / time_float << std::endl;
-  */
   return_str << std::endl;
   
 
