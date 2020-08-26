@@ -71,6 +71,7 @@ void populate_ChipConfigMaps()
   ChipConfig IntelNeo = { 256, 32, 16, 8 };
   ChipConfig MaliMP71 = { 1024, 256, 8, 8 };
   ChipConfig MaliT628 = { 256, 32, 8, 1 };
+  ChipConfig Nvidia2080Ti = { 1024, 256, 64, 32 };
   
   ChipConfigMaps["default"] = defaultChipConfig;
   ChipConfigMaps["Intel(R) Core(TM) i7-5600U CPU @ 2.60GHz"] = Inteli75600u;
@@ -84,6 +85,7 @@ void populate_ChipConfigMaps()
   ChipConfigMaps["Intel(R) Gen9 HD Graphics NEO"] = IntelNeo;
   ChipConfigMaps["Mali-G71"] = MaliMP71;
   ChipConfigMaps["Mali-T628"] = MaliT628;
+  ChipConfigMaps["GeForce RTX 2080 Ti"] = Nvidia2080Ti;
 }
 
 //From IWOCL tutorial (needs attribution)
