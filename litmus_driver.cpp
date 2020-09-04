@@ -690,7 +690,7 @@ TestConfig parse_config(const std::string &config_str) {
   free(histogram);
   ret_info = return_str.str();
   return 1;
-}
+ }
 
 //From the IWOCL tutorial (needs attribution)
 std::string loadFile(const char* input, size_t *len) {
