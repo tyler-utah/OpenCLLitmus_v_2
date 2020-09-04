@@ -22,7 +22,8 @@
 
 std::string INPUT_FILE;
 //std::string kernel_include = "C:\\Users\\Tyler\\Documents\\GPUMemTesting2\\OpenCLLitmus\\tests";
-std::string kernel_include = "/localdisk/jkirkham/GPU_Conformance/OpenCL_tests/interwg_base";
+//std::string kernel_include = "/localdisk/jkirkham/GPU_Conformance/OpenCL_tests/interwg_base";
+std::string kernel_include = "https://github.com/tyler-utah/OpenCL_tests.git"
 //std::string kernel_include = "/home/odroid/Documents/github/OpenCL_tests/interwg_base";
 //std::string kernel_include = "/localdisk/jkirkham/GPU_Conformance/OpenCL_tests/interwg_base";
 //std::string kernel_include = "/home/odroid/Documents/github/OpenCL_tests/interwg_base";

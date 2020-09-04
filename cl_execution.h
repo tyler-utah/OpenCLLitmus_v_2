@@ -202,7 +202,7 @@ public:
 
     exec_program = CLWCreateProgramWithSource(exec_context, 1, (const char **)& source_c_str, &len, &err);
     if (err < 0) {
-      cout << "error at line 205\n";
+      //std::cout << "error at line 205\n";
       return err;
     }
 
@@ -233,12 +233,12 @@ public:
     //check_ocl(ret);
     
     if (err != CL_SUCCESS) {
-      cout << "error at line 236\n";
+      //std::cout << "error at line 236\n";
       char buffer[32000];
       cl_program_build_info b_info = CL_PROGRAM_BUILD_LOG;
       int err2 = CLWGetProgramBuildInfo(exec_program, exec_device, b_info, 32000, buffer, NULL);
-      cout << "error at line 240 " << err2 << "\n";
-      cout << buffer << "\n";
+      //std::cout << "error at line 240 " << err2 << "\n";
+      //std::cout << buffer << "\n";
       std::string log(buffer);
       to_ret << log << std::endl;
       ret = to_ret.str();
